@@ -1,0 +1,122 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+class TraditionalArtsPage extends StatefulWidget {
+  final String stateName;
+
+  const TraditionalArtsPage({super.key, required this.stateName});
+
+  @override
+  TraditionalArtsPageState createState() => TraditionalArtsPageState();
+}
+
+class TraditionalArtsPageState extends State<TraditionalArtsPage> {
+  late Future<List<Map<String, String>>> artsDataFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    artsDataFuture = fetchArtsData();
+  }
+
+  Future<List<Map<String, String>>> fetchArtsData() async {
+    try {
+      final response =
+          await http.get(Uri.parse('https://test2342.vercel.app/api/arts'));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        final userData = data['users'] as List<dynamic>?;
+
+        if (userData != null && userData.isNotEmpty) {
+          final stateData = userData.first[widget.stateName] as List<dynamic>?;
+
+          return stateData
+                  ?.map((item) => {
+                        "image": (item["image"] ?? "").toString(),
+                        "name": (item["name"] ?? "Unknown Name").toString(),
+                        "description":
+                            (item["description"] ?? "No description available")
+                                .toString()
+                      })
+                  .toList() ??
+              [];
+        } else {
+          return [];
+        }
+      } else {
+        throw Exception('Failed to load arts data');
+      }
+    } catch (e) {
+      throw Exception('Failed to load arts data');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Traditional Arts & Crafts - ${widget.stateName}"),
+        backgroundColor: const Color(0xFFF5A623), // Set AppBar color
+        foregroundColor: Colors.white, // Set AppBar text color
+      ),
+      backgroundColor: Colors.white, // Set background color to white
+      body: FutureBuilder<List<Map<String, String>>>(
+        future: artsDataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("No data available"));
+          }
+
+          final sites = snapshot.data!;
+          return ListView.builder(
+            padding: const EdgeInsets.all(16.0),
+            itemCount: sites.length,
+            itemBuilder: (context, index) {
+              final site = sites[index];
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: site["image"]!.startsWith("http") &&
+                              site["image"]!.isNotEmpty
+                          ? Image.network(site["image"]!,
+                              width: double.infinity, fit: BoxFit.cover)
+                          : Image.asset('assets/placeholder.png',
+                              width: double.infinity, fit: BoxFit.cover),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      site["name"]!,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      site["description"]!,
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const Divider(thickness: 1, height: 20),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
