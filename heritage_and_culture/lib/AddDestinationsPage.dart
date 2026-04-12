@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'api_config.dart';
 
 class AddDestinationPage extends StatefulWidget {
   const AddDestinationPage({super.key});
@@ -20,6 +21,15 @@ class _AddDestinationPageState extends State<AddDestinationPage> {
 
   bool _isLoading = false;
 
+  @override
+  void dispose() {
+    _imageController.dispose();
+    _nameController.dispose();
+    _stateController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
   // Function to send the data to the server via POST request
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
@@ -28,19 +38,24 @@ class _AddDestinationPageState extends State<AddDestinationPage> {
       });
 
       try {
-        final response = await http.post(
-          Uri.parse(
-              'https://test2342.vercel.app/api/post/test'), // removed extra space
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode({
-            'image': _imageController.text.trim(),
-            'name': _nameController.text.trim(),
-            'state': _stateController.text.trim(),
-            'description': _descriptionController.text.trim(),
-          }),
-        );
+        final response = await http
+            .post(
+              ApiConfig.uri('/api/post/test'),
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({
+                'image': _imageController.text.trim(),
+                'name': _nameController.text.trim(),
+                'state': _stateController.text.trim(),
+                'description': _descriptionController.text.trim(),
+              }),
+            )
+            .timeout(ApiConfig.requestTimeout);
 
-        if (response.statusCode == 201) {
+        if (!mounted) {
+          return;
+        }
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Destination added successfully!')),
           );
@@ -49,20 +64,32 @@ class _AddDestinationPageState extends State<AddDestinationPage> {
           _stateController.clear();
           _descriptionController.clear();
         } else {
+          String message = 'Failed to add destination';
+          try {
+            final decoded = ApiResponseParser.decode(response.body);
+            if (decoded is Map<String, dynamic>) {
+              message = decoded['message']?.toString() ?? message;
+            }
+          } catch (_) {
+            message = response.reasonPhrase ?? message;
+          }
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(
-                    'Failed to add destination: ${response.reasonPhrase}')),
+            SnackBar(content: Text('Failed to add destination: $message')),
           );
         }
       } catch (error) {
+        if (!mounted) {
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error occurred: $error')),
         );
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }

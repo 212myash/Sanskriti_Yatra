@@ -1,27 +1,41 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'api_config.dart';
 import 'package:testapp/AllDestinationsPage.dart';
 import 'package:testapp/DestinationDetailPage.dart';
 import 'package:testapp/Home.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  late final Future<List<User>> _usersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _usersFuture = fetchUsers();
+  }
 
   // Function to fetch users from API
   Future<List<User>> fetchUsers() async {
-    final response =
-        await http.get(Uri.parse('https://test2342.vercel.app/api/posts'));
+    final response = await http
+        .get(ApiConfig.uri('/api/posts'))
+        .timeout(ApiConfig.requestTimeout);
 
-    if (response.statusCode == 200) {
-      // If the server returns a 200 OK response, parse the JSON.
-      final List<dynamic> data = json.decode(response.body)['users'];
-      return data.map((userData) => User.fromJson(userData)).toList();
-    } else {
-      // If the server returns an error response, throw an exception.
-      throw Exception('Failed to load users');
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load destinations');
     }
+
+    final decoded = ApiResponseParser.decode(response.body);
+    final users = ApiResponseParser.heritageRecords(decoded);
+    return users
+        .map((userData) => User.fromJson(Map<String, dynamic>.from(userData)))
+        .toList();
   }
 
   @override
@@ -38,7 +52,7 @@ class DashboardPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: FutureBuilder<List<User>>(
-              future: fetchUsers(), // Fetching users data
+              future: _usersFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -121,8 +135,18 @@ class DashboardPage extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(5),
                 child: imagePath.isEmpty
-                    ? const Icon(Icons.account_circle, size: 100)
-                    : Image.network(imagePath, fit: BoxFit.cover),
+                    ? const Center(
+                        child: Icon(Icons.account_circle, size: 100),
+                      )
+                    : Image.network(
+                        imagePath,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(Icons.broken_image, size: 100),
+                          );
+                        },
+                      ),
               ),
             ),
             Padding(

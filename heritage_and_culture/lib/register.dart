@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'api_config.dart';
 import 'login.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -23,7 +24,15 @@ class SignUpPageState extends State<SignUpPage> {
   bool agreeToTerms = false;
   bool isLoading = false;
 
-  final String apiUrl = "https://test2342.vercel.app/api/users/register";
+  @override
+  void dispose() {
+    nameController.dispose();
+    userNameController.dispose();
+    phoneController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   Future<void> signUp() async {
     String name = nameController.text.trim();
@@ -63,38 +72,49 @@ class SignUpPageState extends State<SignUpPage> {
     });
 
     try {
-      var response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "name": name,
-          "user_name": userName,
-          "phone": phone,
-          "dob": dob,
-          "gender": gender,
-          "password": password,
-        }),
-      );
+      var response = await http
+          .post(
+            ApiConfig.uri('/api/users/register'),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({
+              "name": name,
+              "user_name": userName,
+              "phone": phone,
+              "dob": dob,
+              "gender": gender,
+              "password": password,
+            }),
+          )
+          .timeout(ApiConfig.requestTimeout);
 
       if (!mounted) return;
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         showMessage("Sign-Up Successful!", Colors.green);
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       } else {
-        var errorMessage = jsonDecode(response.body)['message'] ?? "Error";
+        var errorMessage = "Error";
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map<String, dynamic>) {
+            errorMessage = decoded['message']?.toString() ?? errorMessage;
+          }
+        } catch (_) {}
         showMessage("Signup Failed: $errorMessage", Colors.red);
       }
     } catch (e) {
+      if (!mounted) return;
       showMessage("Error: $e", Colors.red);
     }
 
-    setState(() {
-      isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   void showMessage(String message, Color color) {

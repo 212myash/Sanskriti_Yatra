@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'api_config.dart';
 
 class TraditionsCustomsPage extends StatefulWidget {
   final String stateName;
@@ -8,11 +9,11 @@ class TraditionsCustomsPage extends StatefulWidget {
   const TraditionsCustomsPage({super.key, required this.stateName});
 
   @override
-  TraditionsCustomsPageState createState() => TraditionsCustomsPageState();
+  State<TraditionsCustomsPage> createState() => TraditionsCustomsPageState();
 }
 
 class TraditionsCustomsPageState extends State<TraditionsCustomsPage> {
-  late Future<List<Map<String, String>>> traditionsFuture;
+  late final Future<List<Map<String, String>>> traditionsFuture;
 
   @override
   void initState() {
@@ -22,33 +23,16 @@ class TraditionsCustomsPageState extends State<TraditionsCustomsPage> {
 
   Future<List<Map<String, String>>> fetchTraditions() async {
     try {
-      final response = await http.get(
-        Uri.parse("https://test2342.vercel.app/api/uc"),
-      );
+      final response = await http
+          .get(ApiConfig.uri('/api/uc'))
+          .timeout(ApiConfig.requestTimeout);
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        final userData = data['users'] as List<dynamic>?;
-
-        if (userData != null && userData.isNotEmpty) {
-          final stateData = userData.first[widget.stateName] as List<dynamic>?;
-
-          return stateData
-                  ?.map((item) => {
-                        "image": (item["image"] ?? "").toString(),
-                        "name": (item["name"] ?? "Unknown Name").toString(),
-                        "description":
-                            (item["description"] ?? "No description available")
-                                .toString()
-                      })
-                  .toList() ??
-              [];
-        } else {
-          return [];
-        }
-      } else {
+      if (response.statusCode != 200) {
         throw Exception('Failed to load data');
       }
+
+      final decoded = ApiResponseParser.decode(response.body);
+      return ApiResponseParser.stateSection(decoded, widget.stateName);
     } catch (e) {
       throw Exception('Failed to load data');
     }
@@ -94,9 +78,14 @@ class TraditionsCustomsPageState extends State<TraditionsCustomsPage> {
                               tradition["image"]!,
                               width: double.infinity,
                               fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Icon(Icons.broken_image, size: 64),
+                                );
+                              },
                             )
                           : Image.asset(
-                              'assets/placeholder.png',
+                              'assets/icon/heritage.png',
                               width: double.infinity,
                               fit: BoxFit.cover,
                             ),

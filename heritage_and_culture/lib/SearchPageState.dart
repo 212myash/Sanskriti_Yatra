@@ -75,6 +75,12 @@ class SearchPageState extends State<SearchPage> {
     });
   }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   Future<bool> _onWillPop() async {
     Navigator.pushReplacement(
       context,

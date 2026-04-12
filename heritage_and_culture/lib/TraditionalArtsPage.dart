@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'api_config.dart';
 
 class TraditionalArtsPage extends StatefulWidget {
   final String stateName;
@@ -8,11 +9,11 @@ class TraditionalArtsPage extends StatefulWidget {
   const TraditionalArtsPage({super.key, required this.stateName});
 
   @override
-  TraditionalArtsPageState createState() => TraditionalArtsPageState();
+  State<TraditionalArtsPage> createState() => TraditionalArtsPageState();
 }
 
 class TraditionalArtsPageState extends State<TraditionalArtsPage> {
-  late Future<List<Map<String, String>>> artsDataFuture;
+  late final Future<List<Map<String, String>>> artsDataFuture;
 
   @override
   void initState() {
@@ -22,32 +23,16 @@ class TraditionalArtsPageState extends State<TraditionalArtsPage> {
 
   Future<List<Map<String, String>>> fetchArtsData() async {
     try {
-      final response =
-          await http.get(Uri.parse('https://test2342.vercel.app/api/arts'));
+      final response = await http
+          .get(ApiConfig.uri('/api/arts'))
+          .timeout(ApiConfig.requestTimeout);
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        final userData = data['users'] as List<dynamic>?;
-
-        if (userData != null && userData.isNotEmpty) {
-          final stateData = userData.first[widget.stateName] as List<dynamic>?;
-
-          return stateData
-                  ?.map((item) => {
-                        "image": (item["image"] ?? "").toString(),
-                        "name": (item["name"] ?? "Unknown Name").toString(),
-                        "description":
-                            (item["description"] ?? "No description available")
-                                .toString()
-                      })
-                  .toList() ??
-              [];
-        } else {
-          return [];
-        }
-      } else {
+      if (response.statusCode != 200) {
         throw Exception('Failed to load arts data');
       }
+
+      final decoded = ApiResponseParser.decode(response.body);
+      return ApiResponseParser.stateSection(decoded, widget.stateName);
     } catch (e) {
       throw Exception('Failed to load arts data');
     }
@@ -90,8 +75,13 @@ class TraditionalArtsPageState extends State<TraditionalArtsPage> {
                       child: site["image"]!.startsWith("http") &&
                               site["image"]!.isNotEmpty
                           ? Image.network(site["image"]!,
-                              width: double.infinity, fit: BoxFit.cover)
-                          : Image.asset('assets/placeholder.png',
+                              width: double.infinity, fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                              return const Center(
+                                child: Icon(Icons.broken_image, size: 64),
+                              );
+                            })
+                          : Image.asset('assets/icon/heritage.png',
                               width: double.infinity, fit: BoxFit.cover),
                     ),
                     const SizedBox(height: 10),

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'api_config.dart';
 import 'Home.dart';
 import 'register.dart';
 import 'forget.dart';
@@ -40,7 +41,12 @@ class LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
 
-  final String apiUrl = "https://test2342.vercel.app/api/users/login";
+  @override
+  void dispose() {
+    user_nameController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   Future<void> login() async {
     String user_name = user_nameController.text.trim();
@@ -56,14 +62,16 @@ class LoginPageState extends State<LoginPage> {
     });
 
     try {
-      var response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "user_name": user_name,
-          "password": password,
-        }),
-      );
+      var response = await http
+          .post(
+            ApiConfig.uri('/api/users/login'),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({
+              "user_name": user_name,
+              "password": password,
+            }),
+          )
+          .timeout(ApiConfig.requestTimeout);
 
       if (!mounted) return;
 
@@ -76,15 +84,25 @@ class LoginPageState extends State<LoginPage> {
           MaterialPageRoute(builder: (context) => const HomePage()),
         );
       } else {
-        showMessage("Invalid username or password!", Colors.red);
+        String message = "Invalid username or password!";
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map<String, dynamic>) {
+            message = decoded['message']?.toString() ?? message;
+          }
+        } catch (_) {}
+        showMessage(message, Colors.red);
       }
     } catch (e) {
+      if (!mounted) return;
       showMessage("Error: $e", Colors.red);
     }
 
-    setState(() {
-      isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   void showMessage(String message, Color color) {

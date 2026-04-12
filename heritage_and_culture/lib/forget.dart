@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'api_config.dart';
 
 class ForgetPasswordPage extends StatefulWidget {
   const ForgetPasswordPage({super.key});
@@ -14,6 +15,13 @@ class ForgetPasswordPage extends StatefulWidget {
 class ForgetPasswordPageState extends State<ForgetPasswordPage> {
   final TextEditingController UsernameController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    UsernameController.dispose();
+    newPasswordController.dispose();
+    super.dispose();
+  }
 
   Future<void> resetPassword() async {
     String Username = UsernameController.text.trim();
@@ -29,27 +37,47 @@ class ForgetPasswordPageState extends State<ForgetPasswordPage> {
       return;
     }
 
-    var url = Uri.parse("https://test2342.vercel.app/api/users/forget");
-    var response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"Usmenam": Username, "newPassword": newPassword}),
-    );
+    var url = ApiConfig.uri("/api/users/forget");
+    try {
+      var response = await http
+          .post(
+            url,
+            headers: {"Content-Type": "application/json"},
+            body:
+                jsonEncode({"user_name": Username, "newPassword": newPassword}),
+          )
+          .timeout(ApiConfig.requestTimeout);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (response.statusCode == 200) {
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Password Updated Successfully"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        String message = "Username not found or update failed!";
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map<String, dynamic>) {
+            message = decoded['message']?.toString() ?? message;
+          }
+        } catch (_) {}
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (error) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Password Updated Successfully"),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Username not found or update failed!"),
+        SnackBar(
+          content: Text('Error: $error'),
           backgroundColor: Colors.red,
         ),
       );

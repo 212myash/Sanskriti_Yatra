@@ -1,18 +1,26 @@
-from fastapi import FastAPI
+import os
+
+from fastapi import FastAPI, HTTPException
 from pymongo import MongoClient
 
 app = FastAPI()
 
-# MongoDB Connection
-client = MongoClient("mongodb+srv://212myashraj:FNaWFWjBCJhWUijZ@cluster0.rwwxb.mongodb.net/")
-db = client["app"]  # Database name
-collection = db["test"]  # Collection (table) name
+mongo_uri = os.getenv("MONGO_URI")
+client = MongoClient(mongo_uri) if mongo_uri else None
+db = client["app"] if client else None
+collection = db["test"] if db else None
 
 # API Endpoint to Get Users
 @app.get("/users")
 def get_users():
-    users = list(collection.find({}, {"_id": 0}))  # Get all users
-    return {"users": users}
+    if collection is None:
+        raise HTTPException(status_code=503, detail="Database is not configured")
+
+    try:
+        users = list(collection.find({}, {"_id": 0}))  # Get all users
+        return {"users": users}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Failed to fetch users") from exc
 
 # API Endpoint to Add User
 # @app.post("/add_user")

@@ -1,5 +1,5 @@
 // ignore_for_file: file_names, unused_field
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -93,10 +93,8 @@ class _HomePageState extends State<HomePage> {
 
   Future<bool> _onWillPop() async {
     if (_selectedIndex == 0) {
-      if (Platform.isAndroid) {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         SystemNavigator.pop();
-      } else if (Platform.isIOS) {
-        exit(0);
       }
     } else {
       setState(() {
