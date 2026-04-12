@@ -198,6 +198,10 @@ function normalizePayload(body) {
   };
 }
 
+function escapeRegex(text) {
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function validatePayload(payload) {
   const missing = [];
   if (!payload.name) missing.push('name');
@@ -407,14 +411,17 @@ app.post('/api/users/register', async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    const existingUser = await User.findOne({ user_name }).lean();
+    const normalizedUserName = String(user_name).trim();
+    const userNameRegex = new RegExp(`^${escapeRegex(normalizedUserName)}$`, 'i');
+
+    const existingUser = await User.findOne({ user_name: userNameRegex }).lean();
     if (existingUser) {
       return res.status(400).json({ message: 'Username already exists' });
     }
 
     const created = await User.create({
       name: String(name).trim(),
-      user_name: String(user_name).trim(),
+      user_name: normalizedUserName,
       phone: String(phone).trim(),
       dob: String(dob).trim(),
       gender: String(gender).trim(),
@@ -445,7 +452,10 @@ app.post('/api/users/login', async (req, res) => {
       return res.status(400).json({ message: 'Username and password are required' });
     }
 
-    const user = await User.findOne({ user_name: String(user_name).trim(), password: String(password) }).lean();
+    const normalizedUserName = String(user_name).trim();
+    const userNameRegex = new RegExp(`^${escapeRegex(normalizedUserName)}$`, 'i');
+
+    const user = await User.findOne({ user_name: userNameRegex, password: String(password) }).lean();
     if (!user) {
       return res.status(401).json({ message: 'Invalid username or password' });
     }
@@ -476,8 +486,11 @@ app.post('/api/users/forget', async (req, res) => {
       return res.status(400).json({ message: 'Username and new password are required' });
     }
 
+    const normalizedUserName = String(user_name).trim();
+    const userNameRegex = new RegExp(`^${escapeRegex(normalizedUserName)}$`, 'i');
+
     const updated = await User.findOneAndUpdate(
-      { user_name: String(user_name).trim() },
+      { user_name: userNameRegex },
       { $set: { password: String(finalNewPassword) } },
       { new: true }
     ).lean();
