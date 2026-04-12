@@ -84,13 +84,10 @@ class LoginPageState extends State<LoginPage> {
           MaterialPageRoute(builder: (context) => const HomePage()),
         );
       } else {
-        String message = "Invalid username or password!";
-        try {
-          final decoded = jsonDecode(response.body);
-          if (decoded is Map<String, dynamic>) {
-            message = decoded['message']?.toString() ?? message;
-          }
-        } catch (_) {}
+        final message = ApiResponseParser.messageFromBody(
+          response.body,
+          fallback: 'Invalid username or password!',
+        );
         showMessage(message, Colors.red);
       }
     } catch (e) {

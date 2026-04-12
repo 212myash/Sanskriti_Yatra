@@ -96,13 +96,10 @@ class SignUpPageState extends State<SignUpPage> {
           MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       } else {
-        var errorMessage = "Error";
-        try {
-          final decoded = jsonDecode(response.body);
-          if (decoded is Map<String, dynamic>) {
-            errorMessage = decoded['message']?.toString() ?? errorMessage;
-          }
-        } catch (_) {}
+        final errorMessage = ApiResponseParser.messageFromBody(
+          response.body,
+          fallback: 'Request failed (${response.statusCode})',
+        );
         showMessage("Signup Failed: $errorMessage", Colors.red);
       }
     } catch (e) {

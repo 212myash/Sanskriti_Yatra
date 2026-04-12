@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
-  static const String defaultBaseUrl = 'https://test2342.vercel.app';
+  static const String defaultBaseUrl = 'https://sanskriti-yatra.vercel.app';
 
   static String get baseUrl {
     const envBaseUrl = String.fromEnvironment('API_BASE_URL');
@@ -92,6 +92,28 @@ class ApiResponseParser {
         .where((item) => item['state']?.toString().trim() == stateName)
         .map((item) => _textMap(item))
         .toList();
+  }
+
+  static String messageFromBody(
+    String body, {
+    String fallback = 'Error',
+  }) {
+    try {
+      final decoded = decode(body);
+      if (decoded is Map<String, dynamic>) {
+        final message = decoded['message']?.toString().trim();
+        if (message != null && message.isNotEmpty) {
+          return message;
+        }
+
+        final error = decoded['error']?.toString().trim();
+        if (error != null && error.isNotEmpty) {
+          return error;
+        }
+      }
+    } catch (_) {}
+
+    return fallback;
   }
 
   static Map<String, String> _textMap(Map item) {

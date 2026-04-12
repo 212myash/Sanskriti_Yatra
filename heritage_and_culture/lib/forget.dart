@@ -59,13 +59,10 @@ class ForgetPasswordPageState extends State<ForgetPasswordPage> {
         );
         Navigator.pop(context);
       } else {
-        String message = "Username not found or update failed!";
-        try {
-          final decoded = jsonDecode(response.body);
-          if (decoded is Map<String, dynamic>) {
-            message = decoded['message']?.toString() ?? message;
-          }
-        } catch (_) {}
+        final message = ApiResponseParser.messageFromBody(
+          response.body,
+          fallback: 'Username not found or update failed!',
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
