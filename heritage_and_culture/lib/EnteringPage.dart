@@ -136,7 +136,7 @@ class EnteringPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 18),
-                ),
+                ],
               ),
             ),
           ),
