@@ -85,40 +85,48 @@ Student of LPU
           itemBuilder: (context, index) {
             final member = teamMembers[index];
             return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.asset(
                     member["image"]!,
-                    width: 120,
+                    width: 96,
+                    height: 96,
                     fit: BoxFit.cover,
                   ),
                 ),
                 const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      member["name"]!,
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      member["position"]!,
-                      style: const TextStyle(
-                          fontSize: 14,
-                          color: Color.fromARGB(255, 107, 110, 112),
-                          fontWeight: FontWeight.w500),
-                    ),
-                    Text(
-                      member["occuption"]!,
-                      style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black,
-                          fontWeight: FontWeight.w500),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        member["name"]!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        member["position"]!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 14,
+                            color: Color.fromARGB(255, 107, 110, 112),
+                            fontWeight: FontWeight.w500),
+                      ),
+                      Text(
+                        member["occuption"]!,
+                        style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             );

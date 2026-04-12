@@ -55,90 +55,83 @@ class StateCategoryPage extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // 2 items per row
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 25,
-                childAspectRatio: 0.9, // Adjust height
-              ),
-              itemCount: categories.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    Widget page;
-                    switch (index) {
-                      case 0:
-                        page = HistoricalHeritagePage(stateName: stateName);
-                        break;
-                      case 1:
-                        page = TraditionalArtsPage(stateName: stateName);
-                        break;
-                      case 2:
-                        page = FestivalsPage(stateName: stateName);
-                        break;
-                      case 3:
-                        page = DanceMusicPage(stateName: stateName);
-                        break;
-                      case 4:
-                        page = LanguageLiteraturePage(stateName: stateName);
-                        break;
-                      // case 5:
-                      //   page = TraditionsCustomsPage(stateName: stateName);
-                      //   break;
-                      case 5:
-                        page = CulinaryHeritagePage(stateName: stateName);
-                        break;
-                      default:
-                        return;
-                    }
+        child: GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.82,
+          ),
+          itemCount: categories.length,
+          itemBuilder: (context, index) {
+            return GestureDetector(
+              onTap: () {
+                Widget page;
+                switch (index) {
+                  case 0:
+                    page = HistoricalHeritagePage(stateName: stateName);
+                    break;
+                  case 1:
+                    page = TraditionalArtsPage(stateName: stateName);
+                    break;
+                  case 2:
+                    page = FestivalsPage(stateName: stateName);
+                    break;
+                  case 3:
+                    page = DanceMusicPage(stateName: stateName);
+                    break;
+                  case 4:
+                    page = LanguageLiteraturePage(stateName: stateName);
+                    break;
+                  case 5:
+                    page = CulinaryHeritagePage(stateName: stateName);
+                    break;
+                  default:
+                    return;
+                }
 
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => page),
-                    );
-                  },
-                  child: Card(
-                    color: const Color.fromARGB(179, 245, 165, 35),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    elevation: 4,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: AspectRatio(
-                              aspectRatio:
-                                  16 / 9, // Maintain a 16:9 aspect ratio
-                              child: Image.asset(
-                                categories[index]["image"]!,
-                                width: double.infinity,
-                                fit: BoxFit
-                                    .cover, // Ensure the image covers the box
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            categories[index]["title"]!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 24, // Adjusted font size
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => page),
                 );
               },
+              child: Card(
+                color: const Color.fromARGB(179, 245, 165, 35),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.asset(
+                            categories[index]["image"]!,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        categories[index]["title"]!,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          height: 1.1,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             );
           },
         ),

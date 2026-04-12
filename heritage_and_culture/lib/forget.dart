@@ -92,7 +92,7 @@ class ForgetPasswordPageState extends State<ForgetPasswordPage> {
         title: const Text("Reset Password"),
         backgroundColor: const Color(0xFFF5A623),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [

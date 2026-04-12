@@ -15,7 +15,7 @@ app.use(
 );
 
 const mongoUri = process.env.MONGO_URI;
-let isDbReady = false;
+let dbConnectPromise = null;
 
 const destinationSchema = new mongoose.Schema(
   {
@@ -27,7 +27,98 @@ const destinationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Destination = mongoose.model('Destination', destinationSchema);
+const Destination = mongoose.models.Destination || mongoose.model('Destination', destinationSchema);
+
+const userSchema = new mongoose.Schema(
+  {
+    name: { type: String, trim: true, required: true },
+    user_name: { type: String, trim: true, required: true, index: true },
+    phone: { type: String, trim: true, required: true },
+    dob: { type: String, trim: true, required: true },
+    gender: { type: String, trim: true, required: true },
+    password: { type: String, required: true },
+  },
+  { timestamps: true }
+);
+
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+const imageRepoRawBase = 'https://raw.githubusercontent.com/212myash/img/main';
+
+const IndianStates = [
+  'Andhra Pradesh',
+  'Arunachal Pradesh',
+  'Assam',
+  'Bihar',
+  'Chhattisgarh',
+  'Goa',
+  'Gujarat',
+  'Haryana',
+  'Himachal Pradesh',
+  'Jharkhand',
+  'Karnataka',
+  'Kerala',
+  'Madhya Pradesh',
+  'Maharashtra',
+  'Manipur',
+  'Meghalaya',
+  'Mizoram',
+  'Nagaland',
+  'Odisha',
+  'Punjab',
+  'Rajasthan',
+  'Sikkim',
+  'Tamil Nadu',
+  'Telangana',
+  'Tripura',
+  'Uttar Pradesh',
+  'Uttarakhand',
+  'West Bengal',
+];
+
+function buildStateCollection(categoryName) {
+  return IndianStates.map((state) => ({
+    state,
+    name: `${state} ${categoryName}`,
+    image: '',
+    description: `${categoryName} highlights for ${state}.`,
+  }));
+}
+
+function normalizeRecord(item) {
+  const normalized = { ...item };
+  const image = typeof normalized.image === 'string' ? normalized.image.trim() : '';
+
+  if (image && !image.startsWith('http://') && !image.startsWith('https://')) {
+    const cleanPath = image.replace(/^\/+/, '').replace(/\\/g, '/');
+    normalized.image = `${imageRepoRawBase}/${encodeURI(cleanPath)}`;
+  }
+
+  return normalized;
+}
+
+function normalizeRecords(items) {
+  return items.map((item) => normalizeRecord(item));
+}
+
+async function fetchCollectionItems(collectionNames) {
+  const db = mongoose.connection.db;
+  if (!db) {
+    return [];
+  }
+
+  for (const name of collectionNames) {
+    try {
+      const docs = await db.collection(name).find({}, { projection: { _id: 0 } }).toArray();
+      if (docs.length > 0) {
+        return normalizeRecords(docs);
+      }
+    } catch (_) {
+      // Try next candidate collection name.
+    }
+  }
+
+  return [];
+}
 
 function cleanText(value, maxLen) {
   if (typeof value !== 'string') return '';
@@ -51,9 +142,39 @@ function validatePayload(payload) {
   return missing;
 }
 
-function guardDb(res) {
-  if (!isDbReady) {
-    res.status(503).json({ message: 'Database is not connected yet.' });
+async function ensureDbConnection() {
+  if (mongoose.connection.readyState === 1) {
+    return true;
+  }
+
+  if (!mongoUri) {
+    return false;
+  }
+
+  if (!dbConnectPromise) {
+    dbConnectPromise = mongoose
+      .connect(mongoUri)
+      .then(() => {
+        console.log('MongoDB connected.');
+        return true;
+      })
+      .catch((error) => {
+        console.error('MongoDB connection failed.', error);
+        dbConnectPromise = null;
+        return false;
+      });
+  }
+
+  return dbConnectPromise;
+}
+
+async function guardDb(res) {
+  const ready = await ensureDbConnection();
+  if (!ready) {
+    res.status(503).json({
+      message: 'Database is not connected yet.',
+      mongoConfigured: Boolean(mongoUri),
+    });
     return false;
   }
   return true;
@@ -83,7 +204,11 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, database: isDbReady ? 'connected' : 'disconnected' });
+  res.json({
+    ok: true,
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    mongoConfigured: Boolean(mongoUri),
+  });
 });
 
 app.get('/api/post/test', (req, res) => {
@@ -97,18 +222,100 @@ app.get('/api/post/test', (req, res) => {
 // Flutter dashboard fetches this route.
 app.get('/api/posts', async (req, res) => {
   try {
-    if (!guardDb(res)) return;
-    const data = await Destination.find().lean();
+    if (!(await guardDb(res))) return;
+    let data = await Destination.find({}, { _id: 0, __v: 0 }).lean();
+    data = normalizeRecords(data);
+    if (data.length === 0) {
+      data = await fetchCollectionItems(['test', 'posts']);
+    }
     res.json({ users: data, data });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch destinations.' });
   }
 });
 
+app.get('/api/hh', async (req, res) => {
+  try {
+    if (!(await guardDb(res))) return;
+    const users = await fetchCollectionItems(['hh', 'historical', 'heritage']);
+    const data = users.length > 0 ? users : buildStateCollection('Historical Heritage');
+    res.json({ users: data, data });
+  } catch (_) {
+    res.status(500).json({ message: 'Failed to fetch historical heritage data.' });
+  }
+});
+
+app.get(['/api/arts', '/api/ta'], async (req, res) => {
+  try {
+    if (!(await guardDb(res))) return;
+    const users = await fetchCollectionItems(['h', 'arts', 'ta']);
+    const data = users.length > 0 ? users : buildStateCollection('Traditional Arts');
+    res.json({ users: data, data });
+  } catch (_) {
+    res.status(500).json({ message: 'Failed to fetch traditional arts data.' });
+  }
+});
+
+app.get('/api/f', async (req, res) => {
+  try {
+    if (!(await guardDb(res))) return;
+    const users = await fetchCollectionItems(['f', 'festivals']);
+    const data = users.length > 0 ? users : buildStateCollection('Festivals');
+    res.json({ users: data, data });
+  } catch (_) {
+    res.status(500).json({ message: 'Failed to fetch festival data.' });
+  }
+});
+
+app.get('/api/ll', async (req, res) => {
+  try {
+    if (!(await guardDb(res))) return;
+    const users = await fetchCollectionItems(['ll', 'language_literature', 'language']);
+    const data = users.length > 0 ? users : buildStateCollection('Language and Literature');
+    res.json({ users: data, data });
+  } catch (_) {
+    res.status(500).json({ message: 'Failed to fetch language data.' });
+  }
+});
+
+app.get('/api/uc', async (req, res) => {
+  try {
+    if (!(await guardDb(res))) return;
+    const users = await fetchCollectionItems(['uc', 'traditions', 'customs']);
+    const data = users.length > 0 ? users : buildStateCollection('Traditions and Customs');
+    res.json({ users: data, data });
+  } catch (_) {
+    res.status(500).json({ message: 'Failed to fetch traditions data.' });
+  }
+});
+
+app.get('/api/c', async (req, res) => {
+  try {
+    if (!(await guardDb(res))) return;
+    const users = await fetchCollectionItems(['c', 'culinary']);
+    const data = users.length > 0 ? users : buildStateCollection('Culinary Heritage');
+    res.json({ users: data, data });
+  } catch (_) {
+    res.status(500).json({ message: 'Failed to fetch culinary data.' });
+  }
+});
+
+// Compatibility route for old clients that request arbitrary collections.
+app.get('/api/:id', async (req, res) => {
+  try {
+    if (!(await guardDb(res))) return;
+    const collectionName = req.params.id;
+    const users = await fetchCollectionItems([collectionName]);
+    res.json({ users, data: users });
+  } catch (_) {
+    res.status(500).json({ message: 'Failed to fetch data.' });
+  }
+});
+
 // Flutter add page currently uses /api/post/test.
 app.post(['/api/post/test', '/api/posts'], async (req, res) => {
   try {
-    if (!guardDb(res)) return;
+    if (!(await guardDb(res))) return;
 
     const payload = normalizePayload(req.body);
     const missing = validatePayload(payload);
@@ -125,24 +332,115 @@ app.post(['/api/post/test', '/api/posts'], async (req, res) => {
   }
 });
 
+app.post('/api/users/register', async (req, res) => {
+  try {
+    if (!(await guardDb(res))) return;
+
+    const { name, user_name, phone, dob, gender, password } = req.body || {};
+    if (!name || !user_name || !phone || !dob || !gender || !password) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    const existingUser = await User.findOne({ user_name }).lean();
+    if (existingUser) {
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+
+    const created = await User.create({
+      name: String(name).trim(),
+      user_name: String(user_name).trim(),
+      phone: String(phone).trim(),
+      dob: String(dob).trim(),
+      gender: String(gender).trim(),
+      password: String(password),
+    });
+
+    res.status(201).json({
+      message: 'User registered successfully',
+      user: {
+        name: created.name,
+        user_name: created.user_name,
+        phone: created.phone,
+        dob: created.dob,
+        gender: created.gender,
+      },
+    });
+  } catch (_) {
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+app.post('/api/users/login', async (req, res) => {
+  try {
+    if (!(await guardDb(res))) return;
+
+    const { user_name, password } = req.body || {};
+    if (!user_name || !password) {
+      return res.status(400).json({ message: 'Username and password are required' });
+    }
+
+    const user = await User.findOne({ user_name: String(user_name).trim(), password: String(password) }).lean();
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid username or password' });
+    }
+
+    res.json({
+      message: 'Login successful',
+      user: {
+        name: user.name,
+        user_name: user.user_name,
+        phone: user.phone,
+        dob: user.dob,
+        gender: user.gender,
+      },
+    });
+  } catch (_) {
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+app.post('/api/users/forget', async (req, res) => {
+  try {
+    if (!(await guardDb(res))) return;
+
+    const { user_name, newPassword, new_password } = req.body || {};
+    const finalNewPassword = newPassword ?? new_password;
+
+    if (!user_name || !finalNewPassword) {
+      return res.status(400).json({ message: 'Username and new password are required' });
+    }
+
+    const updated = await User.findOneAndUpdate(
+      { user_name: String(user_name).trim() },
+      { $set: { password: String(finalNewPassword) } },
+      { new: true }
+    ).lean();
+
+    if (!updated) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (_) {
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 async function bootstrap() {
   if (!mongoUri) {
     console.warn('MONGO_URI is not set. Set it in Vercel project environment variables.');
   } else {
-    try {
-      await mongoose.connect(mongoUri);
-      isDbReady = true;
-      console.log('MongoDB connected.');
-    } catch (error) {
-      console.error('MongoDB connection failed.', error);
-      isDbReady = false;
-    }
+    await ensureDbConnection();
   }
 
-  const port = process.env.PORT || 5000;
-  app.listen(port, () => {
-    console.log(`Backend running on port ${port}`);
-  });
+  if (process.env.VERCEL !== '1') {
+    const port = process.env.PORT || 5000;
+    app.listen(port, () => {
+      console.log(`Backend running on port ${port}`);
+    });
+  }
 }
 
 bootstrap();
+
+module.exports = app;

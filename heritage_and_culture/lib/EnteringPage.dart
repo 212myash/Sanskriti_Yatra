@@ -6,6 +6,9 @@ class EnteringPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final imageHeight = screenHeight * 0.28;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -46,61 +49,75 @@ class EnteringPage extends StatelessWidget {
               ),
             ),
           ),
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/icon/heritage.png', // Ensure this is in your assets folder
-                  height: 280,
-                  fit: BoxFit.contain,
+          SafeArea(
+            child: SingleChildScrollView(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height -
+                      MediaQuery.of(context).padding.vertical,
                 ),
-                const SizedBox(height: 10),
-                const Text(
-                  'DIVE INTO A NEW ERA',
-                  style: TextStyle(
-                    color: Color(0xFFD88A26),
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Text(
-                  'एक नए युग में प्रवेश करें',
-                  style: TextStyle(
-                    color: Color(0xFFD88A26),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                SizedBox(
-                  width: 180,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(color: Colors.black),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/icon/heritage.png',
+                        height: imageHeight,
+                        fit: BoxFit.contain,
                       ),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const ask_for_new_user_or_existing(),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'DIVE INTO A NEW ERA',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFFD88A26),
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
                         ),
-                      );
-                    },
-                    child: const Text(
-                      'Go Ahead',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
                       ),
-                    ),
+                      const Text(
+                        'एक नए युग में प्रवेश करें',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFFD88A26),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: 180,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              side: const BorderSide(color: Colors.black),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ask_for_new_user_or_existing(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            'Go Ahead',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ],

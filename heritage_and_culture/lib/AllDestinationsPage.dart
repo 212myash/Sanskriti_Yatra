@@ -302,10 +302,16 @@ class AllDestinationsPage extends StatelessWidget {
                       children: [
                         Text(
                           destinations[index]["place"]!,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         Text(
                           destinations[index]["state"]!,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                               color: Color.fromARGB(255, 255, 255, 255)),
                         ),

@@ -153,9 +153,16 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             Padding(
               padding: const EdgeInsets.all(5.0),
-              child: Text(name,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontFamily: 'Roboto')),
+              child: Text(
+                name,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Roboto',
+                ),
+              ),
             ),
           ],
         ),

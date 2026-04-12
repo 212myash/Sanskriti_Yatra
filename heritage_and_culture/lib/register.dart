@@ -225,6 +225,7 @@ class SignUpPageState extends State<SignUpPage> {
 
                 // Terms & Conditions Checkbox
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Checkbox(
                       value: agreeToTerms,
@@ -234,9 +235,12 @@ class SignUpPageState extends State<SignUpPage> {
                         });
                       },
                     ),
-                    const Text(
-                      "I agree with the Terms of Service",
-                      style: TextStyle(fontSize: 14),
+                    const Expanded(
+                      child: Text(
+                        "I agree with the Terms of Service",
+                        style: TextStyle(fontSize: 14),
+                        softWrap: true,
+                      ),
                     ),
                   ],
                 ),
@@ -266,8 +270,9 @@ class SignUpPageState extends State<SignUpPage> {
                 // Already have an account? Sign In
                 const SizedBox(height: 10),
                 Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       const Text(
                         "Already have an account?",
