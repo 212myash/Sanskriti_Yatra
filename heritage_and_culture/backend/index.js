@@ -3,6 +3,11 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
+const {
+  getFilteredHeritage,
+  seedHeritageFromPexels,
+} = require('./heritagePexels');
+
 const app = express();
 
 app.use(express.json({ limit: '1mb' }));
@@ -279,6 +284,46 @@ app.get('/api/health', async (req, res) => {
     mongoConfigured: Boolean(mongoUri),
     dbName: mongoDbName,
   });
+});
+
+// Seed the Heritage collection from the Pexels API.
+app.post('/api/heritage/seed', async (req, res) => {
+  try {
+    if (!(await guardDb(res))) return;
+
+    const result = await seedHeritageFromPexels();
+    res.status(201).json({
+      message: 'Data inserted successfully',
+      insertedCount: result.insertedCount,
+      matchedCount: result.matchedCount,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Failed to seed heritage data.',
+      error: error.message,
+    });
+  }
+});
+
+// Filter heritage data by state and category.
+app.get('/api/heritage', async (req, res) => {
+  try {
+    if (!(await guardDb(res))) return;
+
+    const { state, category } = req.query;
+    const data = await getFilteredHeritage({ state, category });
+
+    res.json({
+      users: data,
+      data,
+      filters: { state: state || '', category: category || '' },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Failed to fetch heritage data.',
+      error: error.message,
+    });
+  }
 });
 
 app.get('/api/post/test', (req, res) => {
