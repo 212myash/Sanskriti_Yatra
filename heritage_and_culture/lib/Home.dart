@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:testapp/HomeImageDetailPage.dart';
 import 'package:testapp/about_page.dart';
+import 'HeritageGalleryPage.dart';
 import 'DashboardPage.dart';
 import 'AddDestinationsPage.dart';
 import 'NotificationsPage.dart';
@@ -191,6 +192,18 @@ class _HomePageState extends State<HomePage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => const AddDestinationPage(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('Heritage Gallery'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HeritageGalleryPage(),
                     ),
                   );
                 },
