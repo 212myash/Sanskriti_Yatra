@@ -88,11 +88,20 @@ class LoginPageState extends State<LoginPage> {
           response.body,
           fallback: 'Invalid username or password!',
         );
-        showMessage(message, Colors.red);
+        debugPrint(
+          'LOGIN_FAIL status=${response.statusCode} baseUrl=${ApiConfig.baseUrl} body=${response.body}',
+        );
+        showMessage(
+          'Login failed (${response.statusCode}) - $message',
+          Colors.red,
+        );
       }
     } catch (e) {
       if (!mounted) return;
-      showMessage("Error: $e", Colors.red);
+      showMessage(
+        "Error contacting ${ApiConfig.baseUrl}: $e",
+        Colors.red,
+      );
     }
 
     if (mounted) {
