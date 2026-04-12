@@ -1,8 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'DestinationDetailPage.dart';
+import 'api_config.dart';
 
-class AllDestinationsPage extends StatelessWidget {
+class AllDestinationsPage extends StatefulWidget {
   const AllDestinationsPage({super.key});
+
+  @override
+  State<AllDestinationsPage> createState() => _AllDestinationsPageState();
+}
+
+class _AllDestinationsPageState extends State<AllDestinationsPage> {
+  late Future<Map<String, String>> _stateImagesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _stateImagesFuture = _loadStateImages();
+  }
+
+  Future<Map<String, String>> _loadStateImages() async {
+    final response = await http
+        .get(ApiConfig.uri('/api/heritage'))
+        .timeout(ApiConfig.requestTimeout);
+
+    if (response.statusCode != 200) {
+      return <String, String>{};
+    }
+
+    final decoded = ApiResponseParser.decode(response.body);
+    final items = ApiResponseParser.collectionItems(decoded);
+    final stateImages = <String, String>{};
+
+    for (final item in items.whereType<Map>()) {
+      final map = Map<String, dynamic>.from(item);
+      final state = map['state']?.toString().trim() ?? '';
+      final image = map['image']?.toString().trim() ?? '';
+
+      if (state.isNotEmpty &&
+          image.isNotEmpty &&
+          !stateImages.containsKey(state)) {
+        stateImages[state] = image;
+      }
+    }
+
+    return stateImages;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -252,75 +295,101 @@ class AllDestinationsPage extends StatelessWidget {
         title: const Text('All Destinations'),
         backgroundColor: const Color(0xFFF5A623),
       ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(8.0),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, // 2 columns
-          crossAxisSpacing: 8.0,
-          mainAxisSpacing: 8.0,
-          childAspectRatio: 1.2,
-        ),
-        itemCount: destinations.length,
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => DestinationDetailPage(
-                    state: destinations[index]["state"]!,
-                    place: destinations[index]["place"]!,
-                    imagePath: destinations[index]["image"]!,
-                    description: destinations[index]
-                        ["description"]!, // Pass the description
+      body: FutureBuilder<Map<String, String>>(
+        future: _stateImagesFuture,
+        builder: (context, snapshot) {
+          final stateImages = snapshot.data ?? <String, String>{};
+
+          return GridView.builder(
+            padding: const EdgeInsets.all(8.0),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 8.0,
+              mainAxisSpacing: 8.0,
+              childAspectRatio: 1.2,
+            ),
+            itemCount: destinations.length,
+            itemBuilder: (context, index) {
+              final destination = destinations[index];
+              final state = destination["state"]!;
+              final imageUrl = stateImages[state] ?? destination["image"]!;
+
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DestinationDetailPage(
+                        state: destination["state"]!,
+                        place: destination["place"]!,
+                        imagePath: imageUrl,
+                        description: destination["description"]!,
+                      ),
+                    ),
+                  );
+                },
+                child: Card(
+                  color: const Color(0xFFF5A623),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 4,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(10),
+                          ),
+                          child: imageUrl.isNotEmpty
+                              ? Image.network(
+                                  imageUrl,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Image.asset(
+                                      'assets/icon/heritage.png',
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                    );
+                                  },
+                                )
+                              : Image.asset(
+                                  'assets/icon/heritage.png',
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(5.0),
+                        child: Column(
+                          children: [
+                            Text(
+                              destination["place"]!,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              destination["state"]!,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color.fromARGB(255, 255, 255, 255),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
             },
-            child: Card(
-              color: Color(0xFFF5A623), // Set the background color to gray
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              elevation: 4,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(10)),
-                      child: Image.asset(
-                        destinations[index]["image"]!,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(5.0),
-                    child: Column(
-                      children: [
-                        Text(
-                          destinations[index]["place"]!,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          destinations[index]["state"]!,
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              color: Color.fromARGB(255, 255, 255, 255)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
           );
         },
       ),
