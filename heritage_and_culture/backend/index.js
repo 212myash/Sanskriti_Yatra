@@ -86,6 +86,14 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, database: isDbReady ? 'connected' : 'disconnected' });
 });
 
+app.get('/api/post/test', (req, res) => {
+  res.status(200).json({
+    message: 'This endpoint accepts POST requests to create a destination.',
+    method: 'POST',
+    endpoint: '/api/post/test',
+  });
+});
+
 // Flutter dashboard fetches this route.
 app.get('/api/posts', async (req, res) => {
   try {
