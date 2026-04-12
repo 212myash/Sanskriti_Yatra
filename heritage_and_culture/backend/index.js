@@ -15,6 +15,7 @@ app.use(
 );
 
 const mongoUri = process.env.MONGO_URI;
+const mongoDbName = process.env.MONGO_DB_NAME || 'app';
 let dbConnectPromise = null;
 
 const destinationSchema = new mongoose.Schema(
@@ -153,9 +154,9 @@ async function ensureDbConnection() {
 
   if (!dbConnectPromise) {
     dbConnectPromise = mongoose
-      .connect(mongoUri)
+      .connect(mongoUri, { dbName: mongoDbName })
       .then(() => {
-        console.log('MongoDB connected.');
+        console.log(`MongoDB connected. db=${mongoDbName}`);
         return true;
       })
       .catch((error) => {
@@ -203,11 +204,13 @@ app.get('/', (req, res) => {
   `);
 });
 
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+  const connected = await ensureDbConnection();
   res.json({
     ok: true,
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    database: connected ? 'connected' : 'disconnected',
     mongoConfigured: Boolean(mongoUri),
+    dbName: mongoDbName,
   });
 });
 
