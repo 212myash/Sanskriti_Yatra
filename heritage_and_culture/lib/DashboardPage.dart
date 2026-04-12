@@ -24,12 +24,12 @@ class _DashboardPageState extends State<DashboardPage> {
   // Function to fetch users from API
   Future<List<User>> fetchUsers() async {
     final response = await http
-        .get(ApiConfig.uri('/api/posts'))
+        .get(ApiConfig.uri('/api/heritage'))
         .timeout(ApiConfig.requestTimeout);
 
     if (response.statusCode != 200) {
       throw Exception(
-        'Failed to load destinations (${response.statusCode}): ${response.body}',
+        'Failed to load heritage images (${response.statusCode}): ${response.body}',
       );
     }
 
@@ -47,7 +47,7 @@ class _DashboardPageState extends State<DashboardPage> {
         children: [
           const SizedBox(height: 25),
           const Text(
-            "Popular Place",
+            "Popular Heritage",
             style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 1),
