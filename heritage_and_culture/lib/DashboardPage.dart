@@ -28,7 +28,9 @@ class _DashboardPageState extends State<DashboardPage> {
         .timeout(ApiConfig.requestTimeout);
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to load destinations');
+      throw Exception(
+        'Failed to load destinations (${response.statusCode}): ${response.body}',
+      );
     }
 
     final decoded = ApiResponseParser.decode(response.body);
