@@ -59,6 +59,29 @@ function guardDb(res) {
   return true;
 }
 
+app.get('/', (req, res) => {
+  res.status(200).send(`
+    <html>
+      <head>
+        <title>Sanskriti Yatra API</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 32px; line-height: 1.6; }
+          code { background: #f2f2f2; padding: 2px 6px; border-radius: 4px; }
+        </style>
+      </head>
+      <body>
+        <h1>Sanskriti Yatra API</h1>
+        <p>The backend is running.</p>
+        <ul>
+          <li><code>/api/health</code> - health check</li>
+          <li><code>/api/posts</code> - list destinations</li>
+          <li><code>/api/post/test</code> - create a destination</li>
+        </ul>
+      </body>
+    </html>
+  `);
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, database: isDbReady ? 'connected' : 'disconnected' });
 });
