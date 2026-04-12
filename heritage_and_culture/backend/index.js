@@ -45,6 +45,69 @@ const userSchema = new mongoose.Schema(
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 const imageRepoRawBase = 'https://raw.githubusercontent.com/212myash/img/main';
 
+const seedDestinations = [
+  {
+    state: 'Uttar Pradesh',
+    name: 'Taj Mahal',
+    image: '',
+    description: 'World-famous white marble mausoleum in Agra and a symbol of Indian heritage.',
+  },
+  {
+    state: 'Punjab',
+    name: 'Golden Temple',
+    image: '',
+    description: 'The holiest Sikh shrine in Amritsar, known for peace, seva, and architecture.',
+  },
+  {
+    state: 'Rajasthan',
+    name: 'Hawa Mahal',
+    image: '',
+    description: 'Iconic Palace of Winds in Jaipur with unique Rajput architecture.',
+  },
+  {
+    state: 'Karnataka',
+    name: 'Hampi',
+    image: '',
+    description: 'UNESCO heritage ruins of the Vijayanagara Empire with temples and stone architecture.',
+  },
+  {
+    state: 'Bihar',
+    name: 'Mahabodhi Temple',
+    image: '',
+    description: 'Sacred Buddhist site in Bodh Gaya where Buddha attained enlightenment.',
+  },
+  {
+    state: 'Tamil Nadu',
+    name: 'Meenakshi Temple',
+    image: '',
+    description: 'Historic Dravidian temple in Madurai, rich in sculpture and cultural heritage.',
+  },
+  {
+    state: 'Gujarat',
+    name: 'Statue of Unity',
+    image: '',
+    description: 'World tallest statue dedicated to Sardar Vallabhbhai Patel.',
+  },
+  {
+    state: 'Maharashtra',
+    name: 'Gateway of India',
+    image: '',
+    description: 'Historic seafront monument in Mumbai and landmark of colonial-era architecture.',
+  },
+  {
+    state: 'Kerala',
+    name: 'Alleppey Backwaters',
+    image: '',
+    description: 'Scenic backwater destination known for houseboats and local culture.',
+  },
+  {
+    state: 'Uttarakhand',
+    name: 'Kedarnath Temple',
+    image: '',
+    description: 'Sacred Himalayan temple and one of the most important Shiva pilgrimage sites.',
+  },
+];
+
 const IndianStates = [
   'Andhra Pradesh',
   'Arunachal Pradesh',
@@ -426,6 +489,34 @@ app.post('/api/users/forget', async (req, res) => {
     res.json({ message: 'Password updated successfully' });
   } catch (_) {
     res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+app.post('/api/seed/posts', async (req, res) => {
+  try {
+    if (!(await guardDb(res))) return;
+
+    const force = req.query.force === '1';
+    const existingCount = await Destination.countDocuments();
+
+    if (existingCount > 0 && !force) {
+      return res.status(200).json({
+        message: 'Seed skipped because data already exists. Use ?force=1 to insert anyway.',
+        existingCount,
+      });
+    }
+
+    if (force) {
+      await Destination.deleteMany({});
+    }
+
+    const inserted = await Destination.insertMany(seedDestinations);
+    res.status(201).json({
+      message: 'Seed data inserted successfully.',
+      insertedCount: inserted.length,
+    });
+  } catch (_) {
+    res.status(500).json({ message: 'Failed to seed destination data.' });
   }
 });
 
