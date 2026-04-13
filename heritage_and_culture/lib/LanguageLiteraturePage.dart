@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'api_config.dart';
+import 'widgets/safe_network_image.dart';
 
 class LanguageLiteraturePage extends StatefulWidget {
   final String stateName;
@@ -72,23 +73,11 @@ class LanguageLiteraturePageState extends State<LanguageLiteraturePage> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: language["image"]!.startsWith("http") &&
-                              language["image"]!.isNotEmpty
-                          ? Image.network(
-                              language["image"]!,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Center(
-                                  child: Icon(Icons.broken_image, size: 64),
-                                );
-                              },
-                            )
-                          : Image.asset(
-                              'assets/icon/heritage.png',
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
+                      child: SafeNetworkImage(
+                        imagePath: language["image"] ?? '',
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Text(

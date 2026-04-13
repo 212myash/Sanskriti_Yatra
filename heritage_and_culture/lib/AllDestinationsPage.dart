@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'DestinationDetailPage.dart';
 import 'api_config.dart';
+import 'widgets/safe_network_image.dart';
 
 class AllDestinationsPage extends StatefulWidget {
   const AllDestinationsPage({super.key});
@@ -323,6 +324,7 @@ class _AllDestinationsPageState extends State<AllDestinationsPage> {
                         state: destination["state"]!,
                         place: destination["place"]!,
                         imagePath: imageUrl,
+                        category: destination["category"] ?? '',
                         description: destination["description"]!,
                       ),
                     ),
@@ -342,17 +344,10 @@ class _AllDestinationsPageState extends State<AllDestinationsPage> {
                             top: Radius.circular(10),
                           ),
                           child: imageUrl.isNotEmpty
-                              ? Image.network(
-                                  imageUrl,
+                              ? SafeNetworkImage(
+                                  imagePath: imageUrl,
                                   fit: BoxFit.cover,
                                   width: double.infinity,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Image.asset(
-                                      'assets/icon/heritage.png',
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                    );
-                                  },
                                 )
                               : Image.asset(
                                   'assets/icon/heritage.png',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'widgets/safe_network_image.dart';
 
 class HomeImageDetailPage extends StatelessWidget {
   final String imagePath;
@@ -14,6 +15,13 @@ class HomeImageDetailPage extends StatelessWidget {
     required this.description,
   });
 
+  Widget _buildImage() {
+    return SafeNetworkImage(
+      imagePath: imagePath,
+      fit: BoxFit.cover,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,10 +33,9 @@ class HomeImageDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Image.asset(
-              imagePath,
-              fit: BoxFit.cover,
+            SizedBox(
               height: MediaQuery.of(context).size.height * 0.35,
+              child: _buildImage(),
             ),
             const SizedBox(height: 16),
             Padding(

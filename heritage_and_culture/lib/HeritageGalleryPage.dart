@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'api_config.dart';
+import 'widgets/safe_network_image.dart';
 
 class HeritageGalleryPage extends StatefulWidget {
   const HeritageGalleryPage({super.key});
@@ -242,15 +243,9 @@ class _HeritageCard extends StatelessWidget {
                     color: Colors.orange.shade50,
                     child: const Icon(Icons.image_not_supported, size: 48),
                   )
-                : Image.network(
-                    imageUrl,
+                : SafeNetworkImage(
+                    imagePath: imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.orange.shade50,
-                        child: const Icon(Icons.broken_image, size: 48),
-                      );
-                    },
                   ),
           ),
           Container(
