@@ -167,7 +167,8 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     final byState = stateScoped.isNotEmpty ? stateScoped : items;
 
     final exactName = byState
-        .where((item) => _normalizeName(item['name']?.toString() ?? '') ==
+        .where((item) =>
+            _normalizeName(item['name']?.toString() ?? '') ==
             _normalizeName(widget.place))
         .toList();
 
@@ -175,7 +176,8 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
         ? exactName
         : byState
             .where(
-              (item) => _nameMatches(item['name']?.toString() ?? '', widget.place),
+              (item) =>
+                  _nameMatches(item['name']?.toString() ?? '', widget.place),
             )
             .toList();
 
